@@ -14,6 +14,28 @@ function nukeServer(ns, server) {
 	}
 }
 
+function scanServers(ns) {
+    var scanned = []
+    var toScan = ['home']
+    var scannedSet = new Set(toScan)
+
+    while (toScan.length > 0) {
+        var current = toScan.shift()
+        var neighbors = ns.scan(current)
+
+        for (var i = 0; i < neighbors.length; i++) {
+            var neighbor = neighbors[i]
+            if (!scannedSet.has(neighbor)) {
+                scannedSet.add(neighbor)
+                toScan.push(neighbor)
+                scanned.push(neighbor)
+            }
+        }
+    }
+
+    return scanned
+}
+
 export function server(ns, host) {
 	nukeServer(ns, host)
 
@@ -23,6 +45,7 @@ export function server(ns, host) {
 	this.max = {}
 	this.max.ram = ns.getServerMaxRam(host)
 	this.max.cash = ns.getServerMaxMoney(host)
+	this.max.chance = ns.getServerBaseSecurity(host)
 
 	Object.defineProperty(this, "cash", {
 		get: function() {
@@ -37,8 +60,4 @@ export function server(ns, host) {
 		},
 		enumerable: true
 	})
-}
-
-export function getAll() {
-
 }
