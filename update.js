@@ -26,7 +26,7 @@ async function getFilesNeededToUpdate() {
 	let toDownload = []
 	
 	for (let file of files) {
-		if (isExtensionAllowed(file.name)) {
+		if (isFileAllowed(file.name)) {
 			toDownload.push([file.name, file.download_url])
 		}
 	}
@@ -34,7 +34,7 @@ async function getFilesNeededToUpdate() {
 	return toDownload
 }
 
-function isExtensionAllowed(fileName) {
+function isFileAllowed(fileName) {
 	for (let ext of OPTIONS.allowedExtensions) {
 		if (fileName.endsWith(ext)) {
 			return true;
