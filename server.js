@@ -6,37 +6,55 @@ function getPrograms() {
 	return programs
 }
 
-function nukeServer(ns, server) {
+function nukeServer(ns, hostName) {
 	let programs = getPrograms()
-	if (ns.getServerNumPortsRequired(server) <= programs.length) {
-		for (let index = 0; index <= programs.length - 1; index++) { ns[programs[i].toLowerCase()](server) }
-		ns.nuke(server);
+	if (ns.getServerNumPortsRequired(hostName) <= programs.length) {
+		for (let index = 0; index <= programs.length - 1; index++) { ns[programs[i].toLowerCase()](hostName) }
+		ns.nuke(hostName);
+		return true
 	}
+	return false
 }
 
-function scanServers(ns) {
-    var scanned = []
-    var toScan = ['home']
-    var scannedSet = new Set(toScan)
+export function getServers(ns) {
+    let hostables = []
+	let hackables = []
+
+    let toScan = ['home']
+    let scanned = new Set(toScan)
 
     while (toScan.length > 0) {
-        var current = toScan.shift()
-        var neighbors = ns.scan(current)
+        let current = toScan.shift()
+        let neighbors = ns.scan(current)
 
-        for (var i = 0; i < neighbors.length; i++) {
-            var neighbor = neighbors[i]
-            if (!scannedSet.has(neighbor)) {
-                scannedSet.add(neighbor)
+        for (let index = 0; index < neighbors.length; index++) {
+            let neighbor = neighbors[index]
+            if (!scanned.has(neighbor)) {
+                scanned.add(neighbor)
                 toScan.push(neighbor)
-                scanned.push(neighbor)
+				
+				if (nukeServer(ns, neighbor)) {
+					let server = new serverClass(ns, neighbor)
+					
+					if (server.max.ram > 2) {
+						hostables.push(server)
+					}
+
+					if (server.max.cash > 0 && ns.getServerRequiredHackingLevel(neighbor) <= ns.getHackingLevel()) {
+						hackables.push(server)
+					}
+				}
             }
         }
     }
 
-    return scanned
+	hostables.sort((a, b) => b.max.ram - a.max.ram)
+	hackables.sort((a, b) => (b.max.cash * b.max.chance) - (a.max.cash * a.max.chance))
+
+    return [hostables, hackables]
 }
 
-export function server(ns, host) {
+export function serverClass(ns, host) {
 	nukeServer(ns, host)
 
 	this.name = host
@@ -45,7 +63,7 @@ export function server(ns, host) {
 	this.max = {}
 	this.max.ram = ns.getServerMaxRam(host)
 	this.max.cash = ns.getServerMaxMoney(host)
-	this.max.chance = ns.getServerBaseSecurity(host)
+	this.max.chance = 1 - ns.getServerBaseSecurity(host) / 100
 
 	Object.defineProperty(this, "cash", {
 		get: function() {
