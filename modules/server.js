@@ -1,4 +1,5 @@
 /** @param {NS} ns */
+var createdServerObjects = {}
 
 function getPrograms() {
 	let programs = ["BruteSSH", "FTPCrack", "relaySMTP", "SQLInject", "HTTPWorm"];
@@ -34,7 +35,7 @@ export function getServers(ns) {
                 toScan.push(neighbor)
 				
 				if (nukeServer(ns, neighbor)) {
-					let server = new serverClass(ns, neighbor)
+					let server = getServerClass(ns, neighbor)
 					
 					if (server.max.ram > 2) {
 						hostables.push(server)
@@ -54,28 +55,38 @@ export function getServers(ns) {
     return [hostables, hackables]
 }
 
-export function serverClass(ns, host) {
-	nukeServer(ns, host)
+export function getServerClass(ns, host) {
+	if (createdServerObjects["host"]) {
+		return createdServerObjects["host"]
+	} else {
+		let server = new serverClass(ns, host)
+		createdServerObjects[host] = server
+		return server
+	}
+}
 
-	this.name = host
-	this.server = ns.getServer(host)
+class serverClass {
+	constructor(ns, host) {
+		this.name = host;
+		this.server = ns.getServer(host);
 
-	this.max = {}
-	this.max.ram = ns.getServerMaxRam(host)
-	this.max.cash = ns.getServerMaxMoney(host)
-	this.max.chance = 1 - ns.getServerBaseSecurity(host) / 100
+		this.max = {};
+		this.max.ram = ns.getServerMaxRam(host);
+		this.max.cash = ns.getServerMaxMoney(host);
+		this.max.chance = 1 - ns.getServerBaseSecurity(host) / 100;
 
-	Object.defineProperty(this, "cash", {
-		get: function() {
-			return ns.getServerMoneyAvailable(host)
-		},
-		enumerable: true
-	})
+		Object.defineProperty(this, "cash", {
+			get: function () {
+				return ns.getServerMoneyAvailable(host);
+			},
+			enumerable: true
+		});
 
-	Object.defineProperty(this, "ram", {
-		get: function() {
-			return this.max.ram - ns.getServerUsedRam(host)
-		},
-		enumerable: true
-	})
+		Object.defineProperty(this, "ram", {
+			get: function () {
+				return this.max.ram - ns.getServerUsedRam(host);
+			},
+			enumerable: true
+		});
+	}
 }
