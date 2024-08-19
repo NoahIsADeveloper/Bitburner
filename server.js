@@ -20,7 +20,7 @@ export function server(ns, host) {
 	this.name = host
 	this.server = ns.getServer(host)
 
-	this.max = {};
+	this.max = {}
 	this.max.ram = ns.getServerMaxRam(host)
 	this.max.cash = ns.getServerMaxMoney(host)
 
