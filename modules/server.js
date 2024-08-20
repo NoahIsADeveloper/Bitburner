@@ -1,24 +1,7 @@
 /** @param {NS} ns */
 var createdServerObjects = {}
 
-function getPrograms(ns) {
-	let programs = ["BruteSSH", "FTPCrack", "relaySMTP", "SQLInject", "HTTPWorm"];
-	for (let i = 0; i <= programs.length - 1; i++) { if (!ns.fileExists(programs + ".exe")) { programs.splice(i, 1); i-- } }
-	return programs
-}
-
-function nukeServer(ns, hostName) {
-	let programs = getPrograms(ns)
-	if (ns.getServerNumPortsRequired(hostName) <= programs.length) {
-		for (let index = 0; index <= programs.length - 1; index++) { ns[programs[index].toLowerCase()](hostName) }
-		ns.nuke(hostName);
-		return true
-	}
-	return false
-}
-
 export function getServers(ns) {
-	ns.ramOverride(4.75)
     let hostables = []
 	let hackables = []	
 	let totalRam = 0
@@ -26,7 +9,7 @@ export function getServers(ns) {
     let toScan = ['home']
     let scanned = new Set(toScan)
 
-	// !note! Add private servers to hostables and total ram
+	// !note! Add private servers to hostables
 
     while (toScan.length > 0) {
         let current = toScan.shift()
@@ -40,7 +23,7 @@ export function getServers(ns) {
 				
 				if (nukeServer(ns, neighbor)) {
 					let server = getServerClass(ns, neighbor)
-					
+
 					if (server.max.ram > 2) {
 						totalRam += server.max.ram
 						hostables.push(server)
@@ -61,13 +44,33 @@ export function getServers(ns) {
 }
 
 export function getServerClass(ns, host) {
-	if (createdServerObjects["host"]) {
-		return createdServerObjects["host"]
+	if (createdServerObjects[host]) {
+		return createdServerObjects[host]
 	} else {
 		let server = new serverClass(ns, host)
 		createdServerObjects[host] = server
 		return server
 	}
+}
+
+function getPrograms(ns) {
+	let programs = ["BruteSSH", "FTPCrack", "relaySMTP", "SQLInject", "HTTPWorm"];
+	for (let index = 0; index <= programs.length - 1; index++) { if (!ns.fileExists(programs[index] + ".exe")) { programs.splice(index, 1); index-- } }
+	return programs
+}
+
+function nukeServer(ns, hostName) {
+	// Prevents dumbass fucking ram allocation issue
+	if (false) { ns.brutessh(); ns.ftpcrack(); ns.relaysmtp(); ns.sqlinject(); ns.httpworm()}
+	
+	// !note! no nuke if already nuked!!!!!
+	let programs = getPrograms(ns)
+	if (ns.getServerNumPortsRequired(hostName) <= programs.length) {
+		for (let index = 0; index <= programs.length - 1; index++) { ns[programs[index].toLowerCase()](hostName) }
+		ns.nuke(hostName);
+		return true
+	}
+	return false
 }
 
 class serverClass {

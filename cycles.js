@@ -10,32 +10,32 @@ function createBatch(ns) {
 	let growTime = ns.formulas.hacking.growTime(target.server, player)
 	let weakenTime = ns.formulas.hacking.weakenTime(target.server, player)
 
-	let hackPercent = ns.formulas.hacking.hackPercent(target.server, player)
+	let hackThreads = 50
+	let weakenThreads1 = 100
+	let growThreads =  50
+	let weakenThreads2 = 100
 
-	let hackThreads = Math.floor(CYCLES.HACK_AMOUNT / hackPercent)
-	let weakenThreads1 = Math.ceil((target.max.chance - target.security) * 20) // !note! dumb
-	let growThreads =  hackThreads * 10 // !note! idiotic
-	let weakenThreads2 = growThreads * 20 // !note! stupid
-
-	if (hackThreads + weakenThreads1 + growThreads + weakenThreads2 > totalRam / CYCLES.SCRIPT_SIZE) { return }
+	if (hackThreads + weakenThreads1 + growThreads + weakenThreads2 > Math.floor(totalRam / CYCLES.SCRIPT_SIZE)) { return }
 
 	let threadsNeeded = [hackThreads, weakenThreads1, growThreads, weakenThreads2]
 	let delaysNeeded = [weakenTime - hackTime, CYCLES.STEP_SIZE, weakenTime - growTime + 2 * CYCLES.STEP_SIZE, 3 * CYCLES.STEP_SIZE]
 
-	for (host of hostables) {
+	for (let host of hostables) {
 		let threads = host.ram / CYCLES.SCRIPT_SIZE
 		
 		while (threads > 0) {
-			// God I wish there was a better way to do this
 			for (let index = 0; index < threadsNeeded.length; index++) {
 				let usedThreads = Math.min(threadsNeeded[index], threads)
+				if (usedThreads <= 0) { continue }
 				
 				if (!ns.fileExists(CYCLES.FILES_NEEDED[index], host.name)) {
 					ns.scp(CYCLES.FILES_NEEDED[index], host.name, "home")
 				}
 
-				ns.exec(CYCLES.FILES_NEEDED[index], host.name, delaysNeeded[index], target.name)
+				ns.tprint("exec")
+				ns.exec(CYCLES.FILES_NEEDED[index], host.name, usedThreads, delaysNeeded[index], target.name)
 
+				threadsNeeded[index] -= usedThreads
 				threads -= usedThreads
 				if (threads >= 0) { break }
 			}
@@ -44,13 +44,13 @@ function createBatch(ns) {
 }
 
 export async function main(ns) {
-	ns.disableLog("ALL")
+	//ns.disableLog("ALL")
 
 	// !note! ns.getScriptName() is repeated twice, can be turned into a variable
 	if (!await ns.prompt(`Do you allow ${ns.getScriptName()} to overwrite/create the following files on needed host servers? (${CYCLES.FILES_NEEDED.map(data => data).join(", ")})`)) { return }
 
-	if (!ns.fileExists("FORMULAS.exe", "home")) {
-		ns.tprint(`Failed because ${ns.getScriptName()} requires formulas.exe to run.`)
+	if (!ns.fileExists("Formulas.exe", "home")) {
+		ns.tprint(`Failed because ${ns.getScriptName()} requires 'Formulas.exe' to run.`)
 		return
 	}
 
