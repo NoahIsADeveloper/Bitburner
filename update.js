@@ -15,19 +15,19 @@ export async function main(ns) {
 	ns.tprint("Starting...")
 	for (let data of toDownload) {
 		ns.tprint(`Overwriting ${data[0]}`)
-		await ns.wget(data[1], data[0], "home")
+		await ns.wget(URL + data[0], data[0], "home")
 	}
 	ns.tprint("Successfully updated scripts.")
 }
 
 async function getFilesNeededToUpdate() {
-	let response = await fetch(`https://api.github.com/repos/${OPTIONS.github}/${OPTIONS.repository}/contents/?ref=${OPTIONS.branch}`)
+	let response = await fetch(`https://api.github.com/repos/${OPTIONS.github}/${Option.repository}/git/trees/${OPTIONS.branch}?recursive=1`)
 	let files = await response.json()
 	let toDownload = []
 	
 	for (let file of files) {
 		if (isFileAllowed(file.name)) {
-			toDownload.push([file.name, file.download_url])
+			toDownload.push([file.name])
 		}
 	}
 
