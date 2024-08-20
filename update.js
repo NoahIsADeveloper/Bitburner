@@ -25,10 +25,16 @@ async function getFilesNeededToUpdate(ns) {
 	let files = await response.json()
 	let toDownload = []
 
-	for (let file of files.tree) {
-		if (isFileAllowed(file.path)) {
-			toDownload.push([file.path])
+	try
+	{
+		for (let file of files.tree) {
+			if (isFileAllowed(file.path)) {
+				toDownload.push([file.path])
+			}
 		}
+	}
+	catch{
+		ns.tprint(`An error occured when trying to fetch files! ${files}`)
 	}
 
 	return toDownload
