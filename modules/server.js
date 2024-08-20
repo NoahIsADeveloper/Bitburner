@@ -20,9 +20,12 @@ function nukeServer(ns, hostName) {
 export function getServers(ns) {
     let hostables = []
 	let hackables = []
+	let totalRam = 0
 
     let toScan = ['home']
     let scanned = new Set(toScan)
+
+	// !note! Add private servers to hostables and total ram
 
     while (toScan.length > 0) {
         let current = toScan.shift()
@@ -38,6 +41,7 @@ export function getServers(ns) {
 					let server = getServerClass(ns, neighbor)
 					
 					if (server.max.ram > 2) {
+						totalRam += server.max.ram
 						hostables.push(server)
 					}
 
@@ -52,7 +56,7 @@ export function getServers(ns) {
 	hostables.sort((a, b) => b.max.ram - a.max.ram)
 	hackables.sort((a, b) => (b.max.cash * b.max.chance) - (a.max.cash * a.max.chance))
 
-    return [hostables, hackables]
+    return [hostables, hackables, totalRam]
 }
 
 export function getServerClass(ns, host) {
@@ -80,11 +84,18 @@ class serverClass {
 				return ns.getServerMoneyAvailable(host);
 			},
 			enumerable: true
-		});
+		})
 
 		Object.defineProperty(this, "ram", {
 			get: function () {
 				return this.max.ram - ns.getServerUsedRam(host);
+			},
+			enumerable: true
+		})
+
+		Object.defineProperty(this, "security", {
+			get: function () {
+				return ns.getServerSecurityLevel(host);
 			},
 			enumerable: true
 		});
