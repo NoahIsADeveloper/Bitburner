@@ -6,10 +6,8 @@ const OPTIONS = {
 }
 
 const URL = `https://raw.githubusercontent.com/${OPTIONS.github}/${OPTIONS.repository}/${OPTIONS.branch}/`;
-var netscriptfordebug
 
 export async function main(ns) {
-	netscriptfordebug = ns
 	if (!await ns.prompt("Did you backup your files? (run 'download *' in terminal, and backup in Augmentations)")) { return }
 	let toDownload = await getFilesNeededToUpdate()
 	if (!await ns.prompt(`Do you allow '${ns.getScriptName()}' to create/overwrite the following files: (${toDownload.map(data => data[0]).join(", ")})`)) { return }
