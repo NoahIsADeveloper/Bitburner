@@ -14,8 +14,8 @@ export async function main(ns) {
 
 	ns.tprint("Starting...")
 	for (let data of toDownload) {
-		ns.tprint(`${ns.fileExists(data[0]) ? "Overwriting" : "Creating"} ${data[0]}`)
-		await ns.wget(URL + data[0], data[0], "home")
+		let success = await ns.wget(URL + data[0], data[0], "home")
+		ns.tprint(`${ns.fileExists(data[0]) ? "Overwriting" : "Creating"} ${data[0]} ${success ? "Successful" : "Unsuccessful"}`)
 	}
 	ns.tprint("Successfully updated scripts.")
 }

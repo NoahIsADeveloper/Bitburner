@@ -1,16 +1,16 @@
 /** @param {NS} ns */
 var createdServerObjects = {}
 
-function getPrograms() {
+function getPrograms(ns) {
 	let programs = ["BruteSSH", "FTPCrack", "relaySMTP", "SQLInject", "HTTPWorm"];
 	for (let i = 0; i <= programs.length - 1; i++) { if (!ns.fileExists(programs + ".exe")) { programs.splice(i, 1); i-- } }
 	return programs
 }
 
 function nukeServer(ns, hostName) {
-	let programs = getPrograms()
+	let programs = getPrograms(ns)
 	if (ns.getServerNumPortsRequired(hostName) <= programs.length) {
-		for (let index = 0; index <= programs.length - 1; index++) { ns[programs[i].toLowerCase()](hostName) }
+		for (let index = 0; index <= programs.length - 1; index++) { ns[programs[index].toLowerCase()](hostName) }
 		ns.nuke(hostName);
 		return true
 	}
@@ -18,8 +18,9 @@ function nukeServer(ns, hostName) {
 }
 
 export function getServers(ns) {
+	ns.ramOverride(4.75)
     let hostables = []
-	let hackables = []
+	let hackables = []	
 	let totalRam = 0
 
     let toScan = ['home']
@@ -77,7 +78,7 @@ class serverClass {
 		this.max = {};
 		this.max.ram = ns.getServerMaxRam(host);
 		this.max.cash = ns.getServerMaxMoney(host);
-		this.max.chance = 1 - ns.getServerBaseSecurity(host) / 100;
+		this.max.chance = 1 - ns.getServerBaseSecurityLevel(host) / 100;
 
 		Object.defineProperty(this, "cash", {
 			get: function () {

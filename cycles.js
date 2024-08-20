@@ -1,8 +1,8 @@
-import { getServers } from "./modules/server."
+import { getServers } from "./modules/server"
 import { CYCLES } from "./settings"
 
 function createBatch(ns) {
-	let [hostables, hackables, totalRam] = getServers()
+	let [hostables, hackables, totalRam] = getServers(ns)
 	let target = hackables[0]
 	
 	let player = ns.getPlayer()
@@ -25,7 +25,7 @@ function createBatch(ns) {
 	for (host of hostables) {
 		let threads = host.ram / CYCLES.SCRIPT_SIZE
 		
-		while (threads > 0 && (hackThreads + weakenThreads1 + growThreads + weakenThreads2) > 0) {
+		while (threads > 0) {
 			// God I wish there was a better way to do this
 			for (let index = 0; index < threadsNeeded.length; index++) {
 				let usedThreads = Math.min(threadsNeeded[index], threads)
@@ -39,12 +39,6 @@ function createBatch(ns) {
 				threads -= usedThreads
 				if (threads >= 0) { break }
 			}
-			if (hackThreads > 0) {
-				let usedThreads = Math.min(hackThreads, threads)
-				ns.exec()
-				if (threads == usedThreads) { break }
-				threads -= usedThreads
-			}
 		}
 	}
 }
@@ -53,7 +47,7 @@ export async function main(ns) {
 	ns.disableLog("ALL")
 
 	// !note! ns.getScriptName() is repeated twice, can be turned into a variable
-	if (!await ns.prompt(`Do you allow ${ns.getScriptName()} to overwrite/create the following files on needed servers? (${CYCLES.FILES_NEEDED.map(data => data[0]).join(", ")})`)) { return }
+	if (!await ns.prompt(`Do you allow ${ns.getScriptName()} to overwrite/create the following files on needed host servers? (${CYCLES.FILES_NEEDED.map(data => data).join(", ")})`)) { return }
 
 	if (!ns.fileExists("FORMULAS.exe", "home")) {
 		ns.tprint(`Failed because ${ns.getScriptName()} requires formulas.exe to run.`)
@@ -62,6 +56,6 @@ export async function main(ns) {
 
 	while (true) {
 		createBatch(ns)
-		ns.asleep(CYCLES.STEP_SIZE)
+		await ns.asleep(CYCLES.STEP_SIZE)
 	}
 }
