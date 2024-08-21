@@ -17,4 +17,5 @@ home;wget https://raw.githubusercontent.com/NoahIsADeveloper/Bitburner/main/upda
 
 ### How to use
 you don't lmao loser 🤣🤣😂😂
-don't run cycles.js, it does NOT work! all it does rn is brick ur shit
+rn there's only cycles.js which isn't even finished 🤣
+also sometimes you have to reload to be able to re-run some scripts??? no clue why

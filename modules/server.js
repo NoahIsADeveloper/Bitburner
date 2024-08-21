@@ -2,14 +2,12 @@
 var createdServerObjects = {}
 
 export function getServers(ns) {
-    let hostables = []
+    let hostables = [getServerClass(ns, "home")]
 	let hackables = []	
 	let totalRam = 0
 
     let toScan = ['home']
     let scanned = new Set(toScan)
-
-	// !note! Add private servers to hostables
 
     while (toScan.length > 0) {
         let current = toScan.shift()
@@ -38,7 +36,7 @@ export function getServers(ns) {
     }
 
 	hostables.sort((a, b) => b.max.ram - a.max.ram)
-	hackables.sort((a, b) => (b.max.cash * b.max.chance) - (a.max.cash * a.max.chance))
+	hackables.sort((a, b) => b.acph - a.acph)
 
     return [hostables, hackables, totalRam]
 }
@@ -76,30 +74,38 @@ function nukeServer(ns, hostName) {
 class serverClass {
 	constructor(ns, host) {
 		this.name = host;
-		this.server = ns.getServer(host);
+		this.server = ns.getServer(host)
 
 		this.max = {};
-		this.max.ram = ns.getServerMaxRam(host);
-		this.max.cash = ns.getServerMaxMoney(host);
-		this.max.chance = 1 - ns.getServerBaseSecurityLevel(host) / 100;
+		this.max.ram = ns.getServerMaxRam(host)
+		this.max.cash = ns.getServerMaxMoney(host)
+		this.max.chance = 1 - ns.getServerBaseSecurityLevel(host) / 100
+
+		// Average cash per hack, probably a better way to name this though.
+		Object.defineProperty(this, "acph", {
+			get: function () {
+				return (this.max.cash * this.max.chance)
+			},
+			enumerable: true
+		});
 
 		Object.defineProperty(this, "cash", {
 			get: function () {
-				return ns.getServerMoneyAvailable(host);
+				return ns.getServerMoneyAvailable(host)
 			},
 			enumerable: true
 		})
 
 		Object.defineProperty(this, "ram", {
 			get: function () {
-				return this.max.ram - ns.getServerUsedRam(host);
+				return this.max.ram - ns.getServerUsedRam(host)
 			},
 			enumerable: true
 		})
 
 		Object.defineProperty(this, "security", {
 			get: function () {
-				return ns.getServerSecurityLevel(host);
+				return ns.getServerSecurityLevel(host)
 			},
 			enumerable: true
 		});

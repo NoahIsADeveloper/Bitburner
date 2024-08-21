@@ -1,11 +1,15 @@
-import { getServers } from "./modules/server"
-import { CYCLES } from "./settings"
+import { getServers, getServerClass } from "./modules/server"
+import { CYCLES, GENERAL } from "./settings"
 
-function createBatch(ns) {
-	let [hostables, hackables, totalRam] = getServers(ns)
-	let target = hackables[0]
-	
+let batches = 0
+
+async function createBatch(ns) {
 	let player = ns.getPlayer()
+	let [hostables, hackables, totalRam] = getServers(ns)
+
+	// Target should only allow the ones which we can handle to make it so that when a batch ends when one is created
+	let target = getServerClass(ns, "n00dles") // rn a set target for money
+
 	let hackTime = ns.formulas.hacking.hackTime(target.server, player)
 	let growTime = ns.formulas.hacking.growTime(target.server, player)
 	let weakenTime = ns.formulas.hacking.weakenTime(target.server, player)
@@ -21,9 +25,9 @@ function createBatch(ns) {
 	let delaysNeeded = [weakenTime - hackTime, CYCLES.STEP_SIZE, weakenTime - growTime + 2 * CYCLES.STEP_SIZE, 3 * CYCLES.STEP_SIZE]
 
 	for (let host of hostables) {
-		let threads = host.ram / CYCLES.SCRIPT_SIZE
+		let threads = Math.floor(host.ram / CYCLES.SCRIPT_SIZE)
 		
-		while (threads > 0) {
+		while (threads > 0 && threadsNeeded.reduce((a, b) => a + b, 0) > 0) {
 			for (let index = 0; index < threadsNeeded.length; index++) {
 				let usedThreads = Math.min(threadsNeeded[index], threads)
 				if (usedThreads <= 0) { continue }
@@ -32,30 +36,26 @@ function createBatch(ns) {
 					ns.scp(CYCLES.FILES_NEEDED[index], host.name, "home")
 				}
 
-				ns.tprint("exec")
-				ns.exec(CYCLES.FILES_NEEDED[index], host.name, usedThreads, delaysNeeded[index], target.name)
+				ns.exec(CYCLES.FILES_NEEDED[index], host.name, usedThreads, delaysNeeded[index], target.name, batches)
 
 				threadsNeeded[index] -= usedThreads
 				threads -= usedThreads
-				if (threads >= 0) { break }
 			}
 		}
 	}
+
+	batches += 1
 }
 
 export async function main(ns) {
 	//ns.disableLog("ALL")
 
 	// !note! ns.getScriptName() is repeated twice, can be turned into a variable
-	if (!await ns.prompt(`Do you allow ${ns.getScriptName()} to overwrite/create the following files on needed host servers? (${CYCLES.FILES_NEEDED.map(data => data).join(", ")})`)) { return }
-
-	if (!ns.fileExists("Formulas.exe", "home")) {
-		ns.tprint(`Failed because ${ns.getScriptName()} requires 'Formulas.exe' to run.`)
-		return
-	}
+	if (GENERAL.OVERWRITE_WARNINGS && !await ns.prompt(`Do you allow ${ns.getScriptName()} to overwrite/create the following files on needed host servers? (${CYCLES.FILES_NEEDED.map(data => data).join(", ")})`)) { return }
+	if (!ns.fileExists("Formulas.exe", "home")) { ns.tprint(`Failed because ${ns.getScriptName()} requires 'Formulas.exe' to run.`); return }
 
 	while (true) {
-		createBatch(ns)
+		await createBatch(ns)
 		await ns.asleep(CYCLES.STEP_SIZE)
 	}
 }
